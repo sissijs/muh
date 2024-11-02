@@ -1,7 +1,7 @@
 import vm from "node:vm";
 
-import * as builtinHelpers from './builtin-helpers.js';
-import * as builtinFilters from './builtin-filters.js';
+import * as builtinHelpers from "./builtin-helpers.js";
+import * as builtinFilters from "./builtin-filters.js";
 
 const TEMPLATE_REGEX = /\{\{\s*(.+?)\s*\}\}/gm;
 
@@ -26,20 +26,12 @@ function htmlEscape(input) {
 }
 
 function safeEval(snippet, context) {
-  try {
-    const s = new vm.Script(snippet);
-    let result =
-      context && vm.isContext(context)
-        ? s.runInContext(context)
-        : s.runInNewContext(context || { Object, Array });
-    return result;
-  } catch (err) {
-    if (err.name === "SyntaxError" || err.name === "ReferenceError") {
-      console.warn(`${err.name}: ${err.message}`);
-      return "";
-    }
-    throw err;
-  }
+  const s = new vm.Script(snippet);
+  let result =
+    context && vm.isContext(context)
+      ? s.runInContext(context)
+      : s.runInNewContext(context || { Object, Array });
+  return result;
 }
 
 export function parseFilterExpression(expr, ctx) {
@@ -48,9 +40,6 @@ export function parseFilterExpression(expr, ctx) {
     const filter = colonSyntax[1];
     const args = colonSyntax[2]
       ? Array.from(safeEval(`[${colonSyntax[2]}]`, ctx)).map((item) => {
-          if (typeof item === "function") {
-            return item();
-          }
           return item;
         })
       : null;
@@ -60,12 +49,21 @@ export function parseFilterExpression(expr, ctx) {
 }
 
 /**
+ * @typedef TemplateConfig
+ * Configuration object for the template() function.
+ *
+ * @property {Map<string, Function>} filters
+ *
+ */
+
+/**
  * Poor girl's handlebars
  *
  * @param {string} str the template content
- * @returns {Promise<(data: any, filters: Map<string, function>) => string>} a function that takes a data object and returns the processed template
+ * @param {TemplateConfig} config
+ * @returns {Promise<string> => string} a function that takes a data object and returns the processed template
  */
-export function template(str) {
+export async function template(str, data, config) {
   const defaultFilters = new Map();
   let isSafe = false;
   defaultFilters.set("safe", (input) => {
@@ -75,18 +73,19 @@ export function template(str) {
   for (const [filter, func] of Object.entries(builtinFilters)) {
     defaultFilters.set(filter, func);
   }
-  return async (data, providedFilters) => {
-    const context = vm.createContext({ ...builtinHelpers,...data });
-    const filters = mergeMaps(
-      defaultFilters || new Map(),
-      providedFilters || new Map()
-    );
-    return (
-      await replaceAsync(str, TEMPLATE_REGEX, async (_, templateString) => {
-        const expressions = templateString.split("|").map((e) => e.trim());
-        const mainExpression = expressions[0];
-        const filterExpressions = expressions.slice(1);
-        let result = safeEval(mainExpression, context);
+  const context = vm.createContext({ ...builtinHelpers, ...data });
+  const filters = mergeMaps(
+    defaultFilters || new Map(),
+    config?.filters || new Map()
+  );
+  return (
+    await replaceAsync(str, TEMPLATE_REGEX, async (_, templateString) => {
+      const expressions = templateString.split("|").map((e) => e.trim());
+      const mainExpression = expressions[0];
+      const filterExpressions = expressions.slice(1);
+      let result = undefined;
+      try {
+        result = safeEval(mainExpression, context);
         if (typeof result === "undefined") {
           result = "";
         }
@@ -105,22 +104,22 @@ export function template(str) {
             typeof filters.get(filter) !== "function"
           ) {
             // TODO: more helpful error message:
-            throw new Error("unregistered or invalid filter: " + filter);
+            throw Error("unregistered or invalid filter: " + filter);
           }
 
           result = args
             ? filters.get(filter)(result, ...args)
             : filters.get(filter)(result);
-          if (result instanceof Promise) {
-            result = await result;
-          }
         }
 
         if (result instanceof Promise) {
           result = await result;
         }
-        return isSafe ? result : htmlEscape(result);
-      })
-    ).replace(/\\([{}])/gm, "$1");
-  };
+      } catch (err) {
+        console.warn(err);
+        return `<template-error>${err}</template-error>`;
+      }
+      return isSafe ? result : htmlEscape(result);
+    })
+  ).replace(/\\([\{\}])/gm, "$1");
 }

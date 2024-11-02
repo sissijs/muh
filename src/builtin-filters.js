@@ -11,12 +11,25 @@ export function json(arg, pretty = false) {
 /**
  * Format date
  * @param {string|Date|number} date
- * @param {Intl.DateTimeFormatOptions} options
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
- * @returns {string} formatted date
+ * @param {Intl.DateTimeFormatOptions} options
+ * @returns {string} formatted date
  */
-export function date(date, options = null, locales = "en-US") {
-  return new Intl.DateTimeFormat(locales, options).format(
+export function date(date, locales = "de-DE", options = null) {
+  return new Intl.DateTimeFormat(locales, options ?? {dateStyle: 'medium'}).format(
+    typeof date === "string" ? Date.parse(date) : date
+  );
+}
+
+/**
+ * Format time
+ * @param {string|Date|number} date
+ * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
+ * @param {Intl.DateTimeFormatOptions} options DateTimeFormatOptions.
+ * @returns {string} formatted date
+ */
+export function time(date, locales = "de-DE", options = null) {
+  return new Intl.DateTimeFormat(locales, options ?? {timeStyle: 'short'}).format(
     typeof date === "string" ? Date.parse(date) : date
   );
 }
@@ -24,11 +37,11 @@ export function date(date, options = null, locales = "en-US") {
 /**
  * Format as currency.
  * @param {number} amount
- * @param {string?} currency
  * @param {Intl.LocalesArgument} locales
+ * @param {string?} currency
  * @returns
  */
-export function currency(amount, currency = "usd", locales = "en-US") {
+export function currency(amount, locales = "de-DE", currency = "eur") {
   return new Intl.NumberFormat(locales, { style: "currency", currency }).format(
     amount
   );
@@ -54,10 +67,7 @@ export function numberFormat(value, options, locales) {
  * @returns
  */
 export function limit(array, limit) {
-  if (limit < 0) {
-    throw new Error(`Negative limits are not allowed: ${limit}.`);
-  }
-  return Array.from(array).slice(0, limit);
+  return Array.from(array).slice(0, Math.max(0, limit));
 }
 
 /**
