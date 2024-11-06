@@ -12,21 +12,18 @@ Under the hood, it uses `node:vm`, which makes it a node-only library (for now).
 
 ## Filters
 
-You can apply filters to your mustache expressions using the pipe notation. There are a few built-in filters: 
+You can apply filters to your mustache expressions using the pipe notation. There are a few built-in filters:
 
 ```js
 {{ content | safe }} // dont escape html
 {{ promise | async }} // resolve promises
 {{ result | json }} // print json
-{{ article.date | dateFormat: 'dd.mm.YYYY' }} // TODO: format a date
-{{ price | numberFormat: 'de', 'euro' }} // TODO: format a number or currency
-{{ 20 | padStart: ' ', 3 }}
-{{ articles | async | limit: 5 | each: templateFunction }} 
-// articles are a promise
-// first resolve that, 
-// then limit to five, 
-// then map each to a template function
-// concatenate the result
+{{ article.date | date: 'de' }} // 25.12.2024 (for first Christmas Day 2024)
+{{ price | numberFormat: 'de', 'euro' }}  // 1.234,56 €
+{{ fetchJson('/api/articles') | async | limit: 5 | each: templateFunction }} 
+{{ include('article.html', {title: 'Article Title'}) | safe }}
+{{ '<' | htmlentities }} // &lt;
+{{ ' ' | urlencode }} // %20
 ```
 
 ## Helpers
@@ -34,20 +31,14 @@ You can apply filters to your mustache expressions using the pipe notation. Ther
 There are a few built-in helper functions:
 
 ```js
-{{ Date.now() }} // from JS.
-{{ JSON.stringify() }} // from JS.
-
 {{ fetchJson('https://yesno.wtf/api') | async | json }}
 {{ fetchText('https://some-html.api/api/weather') | async }}
 
 {{ include('_includes/partial.html', {title: 'some additional data'}) }} /* TODO */
 ```
-## Loops
 
-Use array functions:
+## API
 
-```html
-<ul>
-  {{ people.map(p => `<li>${p.name}</li>`) }}
-</ul>
+```js
+TODO :)
 ```

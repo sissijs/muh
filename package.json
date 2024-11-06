@@ -2,6 +2,7 @@
   "name": "@sissijs/muh",
   "version": "1.0.0",
   "type": "module",
+  "main": "src/muh.js",
   "engines": {
     "node": ">=20"
   },

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import nonStrictAssert from 'node:assert';
 import { createContext } from 'node:vm';
 
-import { parseFilterExpression, template } from '../src/muh.js';
+import { parseFilterExpression, processTemplateFile, template } from '../src/muh.js';
 
 describe('parseFilterExpression function', () => {
   const scope = { meta: { authors: ['Joe', 'Lea'] }, foo: 'bar', test: () => 42 };
@@ -133,6 +133,64 @@ describe('template function', () => {
   it('should render undefined variables as empty string', async () => {
     const data = {theVoid: void 0};
     assert.equal(await template('{{ theVoid }}', data), '');
+  });
+
+});
+
+describe('processTemplateFile', () => {
+  it('should be able to include files', async () => {
+    const vFS = {
+      'index.html': '<h1>{{ title }}</h1>\n{{ include("article.html", {text: "muh"}) | safe }}',
+      '_includes/article.html': '<article>{{ text }}</article>'
+    };
+
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const content = vFS['index.html'];
+    const result = await processTemplateFile(content, 'index.html', {title: 'test'}, config);
+
+    assert.equal(result, '<h1>test</h1>\n<article>muh</article>');
+  });
+
+  it('should be able to include files with waterfall includes', async () => {
+    const vFS = {
+      'index.html': '<h1>{{ title }}</h1>\n{{ include("wrapper.html") | safe }}',
+      '_includes/wrapper.html': '<div>{{ include("article.html", {text: "muh"}) | safe }}</div>',
+      '_includes/article.html': '<article>{{ text }}</article>'
+    };
+
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const content = vFS['index.html'];
+    const result = await processTemplateFile(content, 'index.html', {title: 'test'}, config);
+
+    assert.equal(result, '<h1>test</h1>\n<div><article>muh</article></div>');
+  });
+
+  it('should be able to include files with cyclic includes', async () => {
+    const vFS = {
+      'index.html': '<h1>{{ title }}</h1>\n{{ include("wrapper.html") | safe }}',
+      '_includes/wrapper.html': '<div>{{ include("article.html", {text: "muh"}) | safe }}</div>',
+      '_includes/article.html': '<article>{{ include("index.html") | safe }}</article>'
+    };
+
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const content = vFS['index.html'];
+    const result = await processTemplateFile(content, 'index.html', {title: 'test'}, config);
+
+    assert.equal(result, 
+      '<h1>test</h1>\n' +
+      '<div><article>' + 
+      '<template-error>Error: cyclic dependency detected.</template-error>' +
+      '</article></div>'
+    );
   });
 
 });
