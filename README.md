@@ -37,8 +37,14 @@ There are a few built-in helper functions:
 {{ include('_includes/partial.html', {title: 'some additional data'}) }} /* TODO */
 ```
 
-## API
+## Usage
 
 ```js
-TODO :)
+const result = await processTemplateFile(
+  '<h1>{{ title }}</h1>',
+  'index.html', 
+  {title: 'Test'}
+);
+
+console.log(result) // <h1>Test</h1>
 ```
