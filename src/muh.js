@@ -5,7 +5,7 @@ import path from "node:path";
 import * as builtinHelpers from "./builtin-helpers.js";
 import * as builtinFilters from "./builtin-filters.js";
 
-const TEMPLATE_REGEX = /\{\{\s*(.+?)\s*\}\}/gm;
+const TEMPLATE_REGEX = /\{\{(.+?)\}\}/gm;
 
 export async function replaceAsync(string, regexp, replacerFunction) {
   const replacements = await Promise.all(
@@ -83,8 +83,8 @@ export async function template(content, data, config) {
   );
   return (
     await replaceAsync(content, TEMPLATE_REGEX, async (_, templateString) => {
-      const expressions = templateString.split("|").map((e) => e.trim());
-      const mainExpression = expressions[0];
+      const expressions = templateString.trim().split("|").map((e) => e.trim());
+      const mainExpression = expressions[0].trim();
       const filterExpressions = expressions.slice(1);
       let result = undefined;
       try {
