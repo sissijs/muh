@@ -1,9 +1,9 @@
 import vm from "node:vm";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import * as builtinHelpers from "./builtin-helpers.js";
 import * as builtinFilters from "./builtin-filters.js";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 
 const TEMPLATE_REGEX = /\{\{\s*(.+?)\s*\}\}/gm;
 
