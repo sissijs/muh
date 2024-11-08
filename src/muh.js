@@ -5,9 +5,13 @@ import path from "node:path";
 import * as builtinHelpers from "./builtin-helpers.js";
 import * as builtinFilters from "./builtin-filters.js";
 
-const TEMPLATE_REGEX = /\{\{(.+?)\}\}/gm;
+const TEMPLATE_REGEX = /\{\{(.{1,1024}?)\}\}/gm;
+const MAX_STRING_LENGTH = 1e10;
 
 export async function replaceAsync(string, regexp, replacerFunction) {
+  if (string.length > MAX_STRING_LENGTH) {
+    throw new Error('string too long.');
+  }
   const replacements = await Promise.all(
     Array.from(string.matchAll(regexp), (match) => replacerFunction(...match))
   );
