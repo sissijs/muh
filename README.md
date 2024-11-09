@@ -19,7 +19,7 @@ You can apply filters to your mustache expressions using the pipe notation. Ther
 {{ promise | async }} // resolve promises
 {{ result | json }} // print json
 {{ article.date | date: 'de' }} // 25.12.2024 (for first Christmas Day 2024)
-{{ price | numberFormat: 'de', 'euro' }}  // 1.234,56 €
+{{ price | currency: 'de', 'euro' }}  // 1.234,56 €
 {{ fetchJson('/api/articles') | async | limit: 5 | each: templateFunction }} 
 {{ include('article.html', {title: 'Article Title'}) | safe }}
 {{ '<' | htmlentities }} // &lt;
