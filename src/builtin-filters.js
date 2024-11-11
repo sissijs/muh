@@ -13,7 +13,7 @@ export function json(arg, pretty = false) {
  * @param {string|Date|number} date
  * @param {Intl.DateTimeFormatOptions} options
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
- * @returns {string} formatted date
+ * @returns {string} formatted date
  */
 export function date(date, options = null, locales = "en-US") {
   return new Intl.DateTimeFormat(locales, options).format(
@@ -42,7 +42,7 @@ export function currency(amount, currency = "usd", locales = "en-US") {
  * @returns {string} formatted number
  */
 export function numberFormat(value, options, locales) {
-  return new Intl.NumberFormat(locales || getEnvLocale(), options).format(
+  return new Intl.NumberFormat(locales, options).format(
     value
   );
 }
@@ -85,7 +85,7 @@ export function sort(array) {
  * @param {Iterable} array
  * @param {number} amount
  */
-export function last(amount = 1) {
+export function last(array, amount = 1) {
   return Array.from(array).reverse().slice(0, amount);
 }
 
@@ -96,7 +96,7 @@ export function last(amount = 1) {
  */
 export function htmlentities(str) {
   return str
-    ?.replace(/\&/gm, "&amp;")
+    ?.replace(/&/gm, "&amp;")
     .replace(/</gm, "&lt;")
     .replace(/>/gm, "&gt;");
 }

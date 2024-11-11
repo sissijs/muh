@@ -20,9 +20,9 @@ function mergeMaps(map1, map2) {
 function htmlEscape(input) {
   return input
     ?.toString()
-    .replace(/\&/g, "&amp;")
-    .replace(/\</g, "&lt;")
-    .replace(/\>/g, "&gt;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function safeEval(snippet, context) {
@@ -43,7 +43,7 @@ function safeEval(snippet, context) {
 }
 
 export function parseFilterExpression(expr, ctx) {
-  const colonSyntax = expr.match(/^([a-zA-Z_]\w+?)(?:\: (.+?))?$/);
+  const colonSyntax = expr.match(/^([a-zA-Z_]\w+?)(?:: (.+?))?$/);
   if (colonSyntax !== null) {
     const filter = colonSyntax[1];
     const args = colonSyntax[2]
@@ -121,6 +121,6 @@ export function template(str) {
         }
         return isSafe ? result : htmlEscape(result);
       })
-    ).replace(/\\([\{\}])/gm, "$1");
+    ).replace(/\\([{}])/gm, "$1");
   };
 }
