@@ -50,12 +50,12 @@ export function currency(amount, locales = "de-DE", currency = "eur") {
 /**
  * Format number
  * @param {number} value
- * @param {Intl.NumberFormatOptions} options
  * @param {Intl.LocalesArgument} locales
+ * @param {Intl.NumberFormatOptions} options
  * @returns {string} formatted number
  */
-export function numberFormat(value, options, locales) {
-  return new Intl.NumberFormat(locales, options).format(
+export function numberFormat(value, locales, options = null) {
+  return new Intl.NumberFormat(locales, options ?? {}).format(
     value
   );
 }
