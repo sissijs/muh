@@ -1,7 +1,7 @@
 // smolYAML is a subset of YAML
 
-const parseValue = (str) => str === 'NaN' ? NaN : str === 'undefined' ? undefined : /^\-?\d+(?:\.\d+)?(?:e\d+)?$/.test(str) ||
-  ['true', 'false', 'null'].includes(str) || /^['"\{\}\[\]\/]/.test(str) ? JSON.parse(str) : str;
+const parseValue = (str) => str === 'NaN' ? NaN : str === 'undefined' ? undefined : /^-?\d+(?:\.\d+)?(?:e\d+)?$/.test(str) ||
+  ['true', 'false', 'null'].includes(str) || /^['"{}[\]/]/.test(str) ? JSON.parse(str) : str;
 
 function buildObject(lines) {
   if (lines.length === 0) {

@@ -13,7 +13,7 @@ export function json(arg, pretty = false) {
  * @param {string|Date|number} date
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
  * @param {Intl.DateTimeFormatOptions} options
- * @returns {string} formatted date
+ * @returns {string} formatted date
  */
 export function date(date, locales = "de-DE", options = null) {
   return new Intl.DateTimeFormat(locales, options ?? {dateStyle: 'medium'}).format(
@@ -26,7 +26,7 @@ export function date(date, locales = "de-DE", options = null) {
  * @param {string|Date|number} date
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
  * @param {Intl.DateTimeFormatOptions} options DateTimeFormatOptions.
- * @returns {string} formatted date
+ * @returns {string} formatted date
  */
 export function time(date, locales = "de-DE", options = null) {
   return new Intl.DateTimeFormat(locales, options ?? {timeStyle: 'short'}).format(

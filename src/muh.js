@@ -128,7 +128,7 @@ export async function template(content, data, config) {
       }
       return isSafe ? result : htmlEscape(result);
     })
-  ).replace(/\\([\{\}])/gm, "$1");
+  ).replace(/\\([{}])/gm, "$1");
 }
 
 const defaultResolver = async (filePath) => {
