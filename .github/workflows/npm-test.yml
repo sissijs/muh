@@ -25,10 +25,8 @@ jobs:
           node-version: 22
       - name: Install Dependencies
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            echo "No lock file. Skipping npm ci"
-          fi
+          npm ci
+      - name: Run Lint
+        run: npm run lint
       - name: Run Tests
         run: npm test
