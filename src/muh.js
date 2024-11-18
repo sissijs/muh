@@ -2,6 +2,8 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { frontmatter } from "./frontmatter.js";
+
 import * as builtinHelpers from "./builtin-helpers.js";
 import * as builtinFilters from "./builtin-filters.js";
 
@@ -180,5 +182,7 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
     );
   }
   
-  return await template(inputContent, {...data, include}, config);
+  const { data: frontmatterData, body} = frontmatter(inputContent);
+
+  return await template(body, {...data, ...frontmatterData, include}, config);
 }

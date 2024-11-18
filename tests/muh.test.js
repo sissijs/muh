@@ -5,6 +5,13 @@ import { createContext } from 'node:vm';
 
 import { parseFilterExpression, processTemplateFile, template } from '../src/muh.js';
 
+const withJsonFrontmatter = (str, data) => `---json\n${JSON.stringify(data)}\n---\n${str}`
+
+const withFrontmatter = (str, data) => `---\n${
+  Object.entries(data)
+    .map(([key, val]) => `${key}: ${JSON.stringify(val)}`).join('\n')
+  }\n---\n${str}`
+
 describe('parseFilterExpression function', () => {
   const scope = { meta: { authors: ['Joe', 'Lea'] }, foo: 'bar', test: () => 42 };
   const context = createContext(scope);
@@ -193,4 +200,16 @@ describe('processTemplateFile', () => {
     );
   });
 
+  it('should be able to read data provided by the frontmatter', async () => {
+    const vFS = {
+      'index.html': withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello'}),
+    };
+    const content = vFS['index.html'];
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const result = await processTemplateFile(content, 'index.html', {title: 'Untitled'}, config);
+    assert.equal(result, '<h1>Hello</h1>');
+  });
 });
