@@ -63,6 +63,7 @@ export function parseFilterExpression(expr, ctx) {
  * @property {Map<string, Function>} filters
  * @property {string} baseDir default: "."
  * @property {string} includeDir default: "_includes" 
+ * @property {string} layoutDir default: "_layouts"
  */
 
 /**
@@ -82,7 +83,7 @@ export async function template(content, data, config) {
   for (const [filter, func] of Object.entries(builtinFilters)) {
     defaultFilters.set(filter, func);
   }
-  const context = vm.createContext({ ...builtinHelpers, ...data });
+  const context = vm.createContext({ ...builtinHelpers, ...(data ?? {}) });
   const filters = mergeMaps(
     defaultFilters ?? new Map(),
     config?.filters ?? new Map()
@@ -181,8 +182,49 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
       }
     );
   }
+
+  const layout = async (layoutFilePath, content) => {
+    const parentLayouts = config.parentLayouts?.slice(0) ?? [];
+    if (parentLayouts.includes(layoutFilePath)) {
+      throw new Error('cyclic dependency detected.');
+    }
+    parentLayouts.push(layoutFilePath);
+    const fullLayoutPath = `${path.normalize(
+      path.join(
+        config?.baseDir ?? '.',
+        config?.layoutDir ?? '_layouts',
+        layoutFilePath
+    ))}${/\.\w{1,10}$/.test(layoutFilePath) ? '' : '.html'}`;
+    if (fullLayoutPath.startsWith('..')) {
+      throw new Error(`invalid path "${fullLayoutPath}": break out of the current working dir.`);
+    }
+    const layoutContent = await (config.resolve ?? defaultResolver)(fullLayoutPath);
+    return await processTemplateFile(
+      layoutContent, 
+      layoutFilePath, 
+      {
+        ...data,
+        layout: null, 
+        content
+      }, {
+        ...(config ?? {}),
+        parentLayouts,
+      }
+    );
+  }
   
   const { data: frontmatterData, body} = frontmatter(inputContent);
+  const templateData = {...data, ...frontmatterData, include};
+  const content = await template(body, templateData, config);
 
-  return await template(body, {...data, ...frontmatterData, include}, config);
+  if (templateData.layout) {
+    try {
+      return await layout(templateData.layout, content);
+    } catch (err) {
+      console.warn(err);
+      return `<template-error>${err}</template-error>`;
+    }
+  }
+
+  return content;
 }

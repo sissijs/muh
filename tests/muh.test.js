@@ -39,6 +39,13 @@ describe('parseFilterExpression function', () => {
 });
 
 describe('template function', () => {
+
+  it('should be able to work with null/undefined data', async () => {
+    assert.equal(await template('muh', undefined), 'muh');
+
+    assert.equal(await template('muh', null), 'muh');
+  });
+
   it('should insert data into the placeholders wrapped in double curly brackets', async () => {
     const testData = {
       'title': 'This is a title',
@@ -212,4 +219,56 @@ describe('processTemplateFile', () => {
     const result = await processTemplateFile(content, 'index.html', {title: 'Untitled'}, config);
     assert.equal(result, '<h1>Hello</h1>');
   });
+
+  it('should be able to specify a layout', async () => {
+    const vFS = {
+      'index.html': withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello', layout: 'article.html'}),
+      '_layouts/article.html': '<article>{{ content | safe }}</article>',
+    };
+
+    const content = vFS['index.html'];
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const result = await processTemplateFile(content, 'index.html', null, config);
+    assert.equal(result, '<article><h1>Hello</h1></article>');
+  });
+
+  it('should be able to handle nested layouts', async () => {
+    const vFS = {
+      'index.html': 
+        withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello', layout: 'article'}),
+      '_layouts/article.html': 
+        withFrontmatter('<article>{{ content | safe }}</article>', {layout: 'base'}),
+      '_layouts/base.html': '<body>{{ content | safe }}</body>',
+    };
+
+    const content = vFS['index.html'];
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const result = await processTemplateFile(content, 'index.html', null, config);
+    assert.equal(result, '<body><article><h1>Hello</h1></article></body>');
+  });
+
+  it('should be able to handle cyclic dependencies by displaying an error', async () => {
+    const vFS = {
+      'index.html': 
+        withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello', layout: 'article'}),
+      '_layouts/article.html': 
+        withFrontmatter('<article>{{ content | safe }}</article>', {layout: 'base'}),
+      '_layouts/base.html': withFrontmatter('<body>{{ content | safe }}</body>', {layout: 'article'})
+    };
+
+    const content = vFS['index.html'];
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const result = await processTemplateFile(content, 'index.html', null, config);
+    assert.equal(result, '<template-error>Error: cyclic dependency detected.</template-error>');
+  });
+
 });
