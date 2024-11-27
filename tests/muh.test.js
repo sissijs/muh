@@ -5,8 +5,6 @@ import { createContext } from 'node:vm';
 
 import { parseFilterExpression, processTemplateFile, template } from '../src/muh.js';
 
-const withJsonFrontmatter = (str, data) => `---json\n${JSON.stringify(data)}\n---\n${str}`
-
 const withFrontmatter = (str, data) => `---\n${
   Object.entries(data)
     .map(([key, val]) => `${key}: ${JSON.stringify(val)}`).join('\n')
@@ -54,14 +52,14 @@ describe('template function', () => {
       }
     }
 
-    const testTemplate = 
+    const testTemplate =
       '<h1>{{ title }}</h1>\n' +
       '<p>Blog article by {{ meta.authors[1] }}</p>\n'
 
-    const expected = 
+    const expected =
       '<h1>This is a title</h1>\n' +
       '<p>Blog article by Lea</p>\n';
-    
+
     assert.equal(await template(testTemplate, testData), expected);
   });
 
@@ -89,7 +87,7 @@ describe('template function', () => {
     const filters = new Map();
     filters.set('shout', (str) => (str||'').toUpperCase());
     const result = await template('{{ greeting | shout }}', {greeting: "Hello"}, { filters });
-    
+
     assert.equal(result, "HELLO");
   });
 
@@ -199,9 +197,9 @@ describe('processTemplateFile', () => {
     const content = vFS['index.html'];
     const result = await processTemplateFile(content, 'index.html', {title: 'test'}, config);
 
-    assert.equal(result, 
+    assert.equal(result,
       '<h1>test</h1>\n' +
-      '<div><article>' + 
+      '<div><article>' +
       '<template-error>Error: cyclic dependency detected.</template-error>' +
       '</article></div>'
     );
@@ -237,9 +235,9 @@ describe('processTemplateFile', () => {
 
   it('should be able to handle nested layouts', async () => {
     const vFS = {
-      'index.html': 
+      'index.html':
         withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello', layout: 'article'}),
-      '_layouts/article.html': 
+      '_layouts/article.html':
         withFrontmatter('<article>{{ content | safe }}</article>', {layout: 'base'}),
       '_layouts/base.html': '<body>{{ content | safe }}</body>',
     };
@@ -255,9 +253,9 @@ describe('processTemplateFile', () => {
 
   it('should be able to handle cyclic dependencies by displaying an error', async () => {
     const vFS = {
-      'index.html': 
+      'index.html':
         withFrontmatter('<h1>{{ title }}</h1>', {title: 'Hello', layout: 'article'}),
-      '_layouts/article.html': 
+      '_layouts/article.html':
         withFrontmatter('<article>{{ content | safe }}</article>', {layout: 'base'}),
       '_layouts/base.html': withFrontmatter('<body>{{ content | safe }}</body>', {layout: 'article'})
     };
@@ -270,5 +268,27 @@ describe('processTemplateFile', () => {
     const result = await processTemplateFile(content, 'index.html', null, config);
     assert.equal(result, '<template-error>Error: cyclic dependency detected.</template-error>');
   });
+
+});
+
+describe('additional syntaxes', () => {
+
+  it('interpretes a <html-include src="..."> tag as basic include when the extension is .html', async () => {
+    const vFS = {
+      'index.html': '<h1>{{ title }}</h1>\n<html-include src="wrapper.html">',
+      '_includes/article.html': '<article>{{ text }}</article>'
+    };
+
+    const config = {
+      resolve: async (filePath) => vFS[filePath]
+    };
+
+    const content = vFS['index.html'];
+    const result = await processTemplateFile(content, 'index.html', {title: 'test'}, config);
+
+    assert.equal(result, '<h1>test</h1>\n<article>muh</article>');
+
+  });
+
 
 });
