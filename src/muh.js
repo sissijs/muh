@@ -11,6 +11,9 @@ const TEMPLATE_REGEX = /\{\{(.{1,1024}?)\}\}/gm;
 const MAX_STRING_LENGTH = 1e10;
 
 export async function replaceAsync(string, regexp, replacerFunction) {
+  if (! string) {
+    return string;
+  }
   if (string.length > MAX_STRING_LENGTH) {
     throw new Error('string too long.');
   }
@@ -131,7 +134,7 @@ export async function template(content, data, config) {
       }
       return isSafe ? result : htmlEscape(result);
     })
-  ).replace(/\\([{}])/gm, "$1");
+  )?.replace(/\\([{}])/gm, "$1");
 }
 
 const defaultResolver = async (filePath) => {
