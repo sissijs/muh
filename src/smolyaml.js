@@ -21,21 +21,22 @@ function buildObject(lines) {
       throw new Error('unsupported Syntax');
     }
     const nextLine = i < lines.length - 1 ? lines[i + 1] : null;
-    if (line.t === 2 && line.k && ref instanceof Array) {
-      temp = {[line.k]: parseValue(line.v)};
+    const prop = line.k === 'prototype' || line.k === '__proto__' ? '_invalid_' : line.k;
+    if (line.t === 2 && prop && ref instanceof Array) {
+      temp = {[prop]: parseValue(line.v)};
       ref.push(temp);
       stack.push([ref, line.i]);
       ref = temp;
     }
-    if (line.t === 0 && line.k && ref instanceof Array === false) {
+    if (line.t === 0 && prop && ref instanceof Array === false) {
       if (line.v) {
-        ref[line.k] = parseValue(line.v);
+        ref[prop] = parseValue(line.v);
       } else {
-        ref[line.k] = nextLine.t === 0 ? {} : [];
+        ref[prop] = nextLine.t === 0 ? {} : [];
       }
       if (nextLine && nextLine.i > line.i) {
         stack.push([ref, line.i]);
-        ref = ref[line.k];
+        ref = ref[prop];
         continue;
       }
     }
