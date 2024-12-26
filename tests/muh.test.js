@@ -5,6 +5,10 @@ import { createContext } from 'node:vm';
 
 import { parseFilterExpression, processTemplateFile, template } from '../src/muh.js';
 
+const createDefaultTestResolver = (vFS) => async (filePath) => {
+  const normalizedPath = filePath?.replace(/\\/g,'/')
+  return vFS[normalizedPath]
+}
 const withJsonFrontmatter = (str, data) => `---json\n${JSON.stringify(data)}\n---\n${str}`
 
 const withFrontmatter = (str, data) => `---\n${
@@ -159,7 +163,7 @@ describe('processTemplateFile', () => {
     };
 
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const content = vFS['index.html'];
@@ -176,7 +180,7 @@ describe('processTemplateFile', () => {
     };
 
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const content = vFS['index.html'];
@@ -193,7 +197,7 @@ describe('processTemplateFile', () => {
     };
 
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const content = vFS['index.html'];
@@ -213,7 +217,7 @@ describe('processTemplateFile', () => {
     };
     const content = vFS['index.html'];
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const result = await processTemplateFile(content, 'index.html', {title: 'Untitled'}, config);
@@ -228,7 +232,7 @@ describe('processTemplateFile', () => {
 
     const content = vFS['index.html'];
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const result = await processTemplateFile(content, 'index.html', null, config);
@@ -246,7 +250,7 @@ describe('processTemplateFile', () => {
 
     const content = vFS['index.html'];
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const result = await processTemplateFile(content, 'index.html', null, config);
@@ -264,7 +268,7 @@ describe('processTemplateFile', () => {
 
     const content = vFS['index.html'];
     const config = {
-      resolve: async (filePath) => vFS[filePath]
+      resolve: createDefaultTestResolver(vFS)
     };
 
     const result = await processTemplateFile(content, 'index.html', null, config);
