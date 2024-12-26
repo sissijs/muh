@@ -1,4 +1,4 @@
-import { smolYAML } from "./smolyaml.js";
+import { smolYAML } from "../smolyaml.js";
 
 const REGEX = /^-{3}(\w+)?\n((?:(?:.*)\n)*)-{3}\n((?:(?:.*)\n?)*)/;
 

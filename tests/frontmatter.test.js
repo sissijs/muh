@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { frontmatter } from '../src/frontmatter.js'
+import { frontmatter } from '../src/utils/frontmatter.js'
 
 const helloWorld = `---
 layout: base.html

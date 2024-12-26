@@ -1,141 +1,13 @@
-import vm from "node:vm";
+///<reference path="typedefs.js"/>
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { frontmatter } from "./frontmatter.js";
+import { frontmatter } from "./utils/frontmatter.js";
+import { htmlPreprocessor } from "./preprocessors/html.js";
+import { cssPreprocessor } from "./preprocessors/css.js";
+import { markdownPreprocessor } from "./preprocessors/markdown.js";
+import { template } from "./utils/template.js";
 
-import * as builtinHelpers from "./builtin-helpers.js";
-import * as builtinFilters from "./builtin-filters.js";
-
-const TEMPLATE_REGEX = /\{\{(.{1,1024}?)\}\}/gm;
-const MAX_STRING_LENGTH = 1e10;
-
-export async function replaceAsync(string, regexp, replacerFunction) {
-  if (! string) {
-    return string;
-  }
-  if (string.length > MAX_STRING_LENGTH) {
-    throw new Error('string too long.');
-  }
-  const replacements = await Promise.all(
-    Array.from(string.matchAll(regexp), (match) => replacerFunction(...match))
-  );
-  let i = 0;
-  return string.replace(regexp, () => replacements[i++]);
-}
-
-function mergeMaps(map1, map2) {
-  return new Map([...map1, ...map2]);
-}
-
-function htmlEscape(input) {
-  return input
-    ?.toString()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function safeEval(snippet, context) {
-  const s = new vm.Script(snippet);
-  let result =
-    context && vm.isContext(context)
-      ? s.runInContext(context)
-      : s.runInNewContext(context || { Object, Array });
-  return result;
-}
-
-export function parseFilterExpression(expr, ctx) {
-  const colonSyntax = expr.match(/^([a-zA-Z_]\w+?)(?:: (.+?))?$/);
-  if (colonSyntax !== null) {
-    const filter = colonSyntax[1];
-    const args = colonSyntax[2]
-      ? Array.from(safeEval(`[${colonSyntax[2]}]`, ctx)).map((item) => {
-          return item;
-        })
-      : null;
-    return [filter, args];
-  }
-  throw new Error("filter syntax error");
-}
-
-/**
- * @typedef TemplateConfig
- * Configuration object for the template() function.
- * @property {(file: string) => Promise<Buffer|String>} resolve
- * @property {Map<string, Function>} filters
- * @property {string} baseDir default: "."
- * @property {string} includeDir default: "_includes" 
- * @property {string} layoutDir default: "_layouts"
- */
-
-/**
- * Poor girl's handlebars
- *
- * @param {string} content the template content
- * @param {TemplateConfig} config
- * @returns {Promise<string> => string} a function that takes a data object and returns the processed template
- */
-export async function template(content, data, config) {
-  const defaultFilters = new Map();
-  let isSafe = false;
-  defaultFilters.set("safe", (input) => {
-    isSafe = true;
-    return input;
-  });
-  for (const [filter, func] of Object.entries(builtinFilters)) {
-    defaultFilters.set(filter, func);
-  }
-  const context = vm.createContext({ ...builtinHelpers, ...(data ?? {}) });
-  const filters = mergeMaps(
-    defaultFilters ?? new Map(),
-    config?.filters ?? new Map()
-  );
-  return (
-    await replaceAsync(content, TEMPLATE_REGEX, async (_, templateString) => {
-      const expressions = templateString.trim().split("|").map((e) => e.trim());
-      const mainExpression = expressions[0].trim();
-      const filterExpressions = expressions.slice(1);
-      let result = undefined;
-      try {
-        result = safeEval(mainExpression, context);
-        if (typeof result === "undefined") {
-          result = "";
-        }
-        if (typeof result === "function") {
-          result = result();
-        }
-        for (const filterExpression of filterExpressions) {
-          const [filter, args] = parseFilterExpression(
-            filterExpression,
-            context
-          );
-          if (
-            !filter ||
-            filters instanceof Map === false ||
-            !filters.has(filter) ||
-            typeof filters.get(filter) !== "function"
-          ) {
-            // TODO: more helpful error message:
-            throw Error("unregistered or invalid filter: " + filter);
-          }
-
-          result = args
-            ? filters.get(filter)(result, ...args)
-            : filters.get(filter)(result);
-        }
-
-        if (result instanceof Promise) {
-          result = await result;
-        }
-      } catch (err) {
-        console.warn(err);
-        return `<template-error>${err}</template-error>`;
-      }
-      return isSafe ? result : htmlEscape(result);
-    })
-  )?.replace(/\\([{}])/gm, "$1");
-}
 
 const defaultResolver = async (filePath) => {
   if (/^https?:\/\//.test(filePath)) {
@@ -157,22 +29,29 @@ const defaultResolver = async (filePath) => {
  * @returns 
  */
 export async function processTemplateFile(inputContent, inputFilePath, data, config) {
-  const include = async (includeFilePath, dataOverrides) => {
-    const parentIncludes = config.parentIncludes?.slice(0) ?? [inputFilePath];
+  const include = async (includeFilePath, dataOverrides, configOverrides) => {
+    const innerConfig = { ...(config ?? {}), ...configOverrides }
+    const parentIncludes = innerConfig.parentIncludes?.slice(0) ?? [inputFilePath];
     if (parentIncludes.includes(includeFilePath)) {
       throw new Error('cyclic dependency detected.');
     }
     parentIncludes.push(includeFilePath);
-    const fullIncludePath = path.normalize(
+    const fullIncludePath = (innerConfig.relativeIncludes || includeFilePath.startsWith('./')) ? 
+    path.normalize(
       path.join(
-        config?.baseDir ?? '.',
-        config?.includeDir ?? '_includes',
+        path.parse(inputFilePath).dir, 
+        includeFilePath)
+      ) :
+      path.normalize(
+        path.join(
+        innerConfig?.baseDir ?? '.',
+        innerConfig?.includeDir ?? '_includes',
         includeFilePath
     ));
     if (fullIncludePath.startsWith('..')) {
       throw new Error(`invalid path "${fullIncludePath}": break out of the current working dir.`);
     }
-    const includeContent = await (config.resolve ?? defaultResolver)(fullIncludePath);
+    const includeContent = await (innerConfig.resolve ?? defaultResolver)(fullIncludePath);
     return await processTemplateFile(
       includeContent, 
       includeFilePath, 
@@ -180,7 +59,7 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
         ...data, 
         ...dataOverrides
       }, {
-        ...(config ?? {}),
+        ...innerConfig,
         parentIncludes,
       }
     );
@@ -218,7 +97,20 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
   
   const { data: frontmatterData, body} = frontmatter(inputContent);
   const templateData = {...data, ...frontmatterData, include};
-  const content = await template(body, templateData, config);
+
+  let content = body;
+  for (const preprocessor of config.preprocessors ?? [htmlPreprocessor, cssPreprocessor, markdownPreprocessor]) {
+    if (typeof preprocessor.extension === 'string' &&
+      inputFilePath.endsWith(preprocessor.extension) === false) {
+      continue;
+    }
+    if (preprocessor.extension instanceof RegExp && 
+      preprocessor.extension.test(inputFilePath) === false) {
+      continue;
+    }
+    content = await preprocessor.process(content, templateData);
+  }
+  content = await template(content, templateData, config);
 
   if (templateData.layout) {
     try {
