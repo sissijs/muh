@@ -59,6 +59,13 @@ function buildObject(lines) {
   return result;
 }
 
+export function countedTrim(str) {
+  return (!str)? {slice: '', trimStart: 0, trimEnd: 0} : {
+    slice: str.trim(), 
+    trimStart: str.length - str.trimStart().length, 
+    trimEnd: str.length - str.trimEnd().length
+  };
+}
 
 /**
  * smolYAML, a subset of YAML
@@ -67,23 +74,23 @@ function buildObject(lines) {
  */
 export function smolYAML(str) {
   const analyzed = str.split(/\r?\n/).map(line => {
-    const m0 = line.match(/^(\s*)(\w+):\s*(.+)?$/);
+    const trimmed = countedTrim(line);
+    const m0 = trimmed.slice.match(/^(\w+):(.+)?$/);
     if (m0) {
-      return {t: 0, i: m0[1].length, k: m0[2], v: m0[3]};
+      return {t: 0, i: trimmed.trimStart, k: m0[1], v: m0[2]?.trim()};
     }
-    const m2 = line.match(/^(\s*)- (\w+):\s*(.+)$/)
+    const m2 = trimmed.slice.match(/^- (\w+):(.+)$/)
     if (m2) {
-      return {t: 2, i: m2[1].length, k: m2[2], v: m2[3]};
+      return {t: 2, i: trimmed.trimStart, k: m2[1], v: m2[2]?.trim()};
     }
-    const m1 = line.match(/^(\s*)- (.+)$/);
+    const m1 = trimmed.slice.match(/^- (.+)$/);
     if (m1) {
-      return {t:1, i: m1[1].length, v: m1[2]};
+      return {t:1, i: trimmed.trimStart, v: m1[1]};
     }
-    if (line.trim() === '' || /\s*#|(\/\/)/.test(line)) {
+    if (trimmed.slice === '' || /^#|(\/\/)/.test(trimmed.slice)) {
       return undefined;
     }
-    const m3 = line.match(/^(\s*)(.+)\s*$/);
-    return {t: 3, i: m3[1].length, v: m3[2]};
+    return {t: 3, i: trimmed.trimStart, v: trimmed.slice};
   }).filter(Boolean);
   return buildObject(analyzed);
 }
