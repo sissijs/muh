@@ -37,6 +37,7 @@ jobs:
           node-version: 22
       - name: Build API documentation
         run: |
+          npm ci
           npm run docs
           touch docs/.nojekyll
       - name: Setup Pages
