@@ -6,3 +6,5 @@ node_modules
 codeql.db
 results.csv
 .vscode/launch.json
+dist/
+docs/

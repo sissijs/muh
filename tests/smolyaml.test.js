@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { smolYAML } from '../src/smolyaml.js';
+import { smolYAML } from '../src/utils/smolyaml.js';
 
 const yamlPlain = `
 title: Lea is a Frontend Developer

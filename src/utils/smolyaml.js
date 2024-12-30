@@ -59,6 +59,12 @@ function buildObject(lines) {
   return result;
 }
 
+
+/**
+ * smolYAML, a subset of YAML
+ * @param {string} str an arbitrary smolYAML string 
+ * @returns {unknown} returns the parsed object 
+ */
 export function smolYAML(str) {
   const analyzed = str.split(/\r?\n/).map(line => {
     const m0 = line.match(/^(\s*)(\w+):\s*(.+)?$/);

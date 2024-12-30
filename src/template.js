@@ -1,25 +1,22 @@
+///<reference path="typedefs.js"/>
 import vm from 'node:vm';
-import { mergeMaps } from './merge-maps.js';
-import { parseFilterExpression } from './parse-filter-expression.js';
-import { replaceAsync } from './replace-async.js';
-import { htmlEscape } from "./html-escape.js";
-import { safeEval } from './safe-eval.js';
-import * as builtinHelpers from "../builtin-helpers.js";
-import * as builtinFilters from "../builtin-filters.js";
+import { mergeMaps } from './utils/merge-maps.js';
+import { parseFilterExpression } from './utils/parse-filter-expression.js';
+import { replaceAsync } from './utils/replace-async.js';
+import { htmlEscape } from "./utils/html-escape.js";
+import { safeEval } from './utils/safe-eval.js';
+import * as builtinHelpers from "./builtin-helpers.js";
+import * as builtinFilters from "./builtin-filters.js";
 
 const TEMPLATE_REGEX = /\{\{(.{1,1024}?)\}\}/gm;
-
-/**
- * @typedef TemplateConfig
- * @property {Map<string, function>} filters
- */
 
 /**
  * Poor girl's handlebars
  *
  * @param {string} content the template content
- * @param {TemplateConfig} config
- * @returns {Promise<string> => string} a function that takes a data object and returns the processed template
+ * @param {any} [data] the data object
+ * @param {TemplateConfig} [config] the template configuration, where you can specify additional filters available inside the template
+ * @returns {string} the template result string
  */
 export async function template(content, data, config) {
   let isSafe = false;

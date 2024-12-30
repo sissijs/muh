@@ -109,13 +109,19 @@ function codeblocks(str, snippetStore) {
   }).join('\n').trim();
 }
 
-export function markdownEscape(str) {
+function markdownEscape(str) {
   return str.replace(/\\([a-z/\\`{}])/, '$1').replace(/(.?)([<>&])(.?)/g, 
     (_, before, char, after) => 
       before + (/[^\s]+/.test(before) || /[^\s]+/.test(after) ? char:`&${{'<':'lt','>':'gt','&':'amp'}[char]};`) + after
     );
 }
 
+/**
+ * The integrated markdown processor
+ * @param {string} input input
+ * @param {escape} escape whether to escape the output or not 
+ * @returns 
+ */
 export function markdown(input, escape = true) {
   if (! input) {
     return undefined;
@@ -147,8 +153,16 @@ export const markdownPreprocessor = {
   name: 'markdown',
   extension: '.md',
   outputExtension: '.html',
+  /**
+   * Markdown engine. Override to use another markdown engine.
+   * @param {string} content the markdown input
+   * @returns {Promise<string>} processed markdown
+   */
+  markdownEngine: async (content) => {
+    return await markdown(content)
+  },
   async process(content, data) {
-    content = markdown(content);
+    content = await markdownPreprocessor.markdownEngine(content);
     return await htmlPreprocessor.process(content, data);
   }
 }

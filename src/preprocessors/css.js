@@ -5,9 +5,16 @@ const INCLUDE_REGEX = /@import ["']([\w:/\\.-]{1,1000}?\.css)["'](?:\s*layer\s*\
 export const cssPreprocessor = {
   name: 'css',
   extension: '.css',
+  /**
+   * Process CSS. Resolves basic CSS import directives via an `include` function provided in data.
+   * 
+   * @param {string} content 
+   * @param {any} data 
+   * @returns processed CSS
+   */
   async process(content, data) {
     return replaceAsync(content, INCLUDE_REGEX, async function (expression, file, layer) {
-      if (typeof data['include'] !== 'function') {
+      if (typeof data?.include !== 'function') {
         return `@import url("${file}")${layer ?` layer(${layer});`:``};\n`;
       }
       let includeContent = null;

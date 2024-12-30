@@ -1,7 +1,12 @@
-import { smolYAML } from "../smolyaml.js";
+import { smolYAML } from "./smolyaml.js";
 
 const REGEX = /^-{3}(\w+)?\n((?:(?:.*)\n)*)-{3}\n((?:(?:.*)\n?)*)/;
 
+/**
+ * Parse a frontmatter into a data object and a body string
+ * @param {string} str input string 
+ * @returns {{data: object; body: string }} a data object and a body string
+ */
 export function frontmatter(str) {
   const matches = str?.replace(/\r\n/g, '\n').match(REGEX);
   if (! matches) {
