@@ -6,9 +6,9 @@ Muh (say: Moo!) stands for "mustached hypertext" and is the template language th
 
 Muh comes in 2 flavors. Both of them live in the `@sissijs/muh` package.
 
-`@sissijs/muh` includes everything. A full-fledged `processTemplateFile` function that supports SmolYAML/JSON frontmatter, layout files, basic preprocessing such as (a minimal) markdown, handling css imports and resolving `<html-include src="">` directives. In roughly 9KB of JavaScript
+`@sissijs/muh` includes everything. A full-fledged `processTemplateFile` function that supports SmolYAML/JSON frontmatter, layout files, basic preprocessing such as (a minimal) markdown, handling css imports and resolving `<html-include src="">` directives. In roughly 10KB of JavaScript.
 
-`@sissijs/muh/template` is just the `template` function that implements the mustache syntax. It also provides the built-in filters for formatting dates/numbers, and built-in helper functions. The helper functions provided are small wrappers around fetch, namely `fetchText()` and `fetchJson()`. All that is contained in roughly 3KB of JavaScript.
+`@sissijs/muh/template` is just the `template` function that implements the mustache syntax. It also provides the built-in filters for formatting dates/numbers, and built-in helper functions. The helper functions provided are small wrappers around fetch, namely `fetchText()` and `fetchJson()`. All that is contained in roughly 4KB of JavaScript.
 
 Sizes are measured with minification and without compression.
 

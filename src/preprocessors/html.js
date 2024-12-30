@@ -2,7 +2,8 @@ import { replaceAsync } from "../utils/replace-async.js";
 
 export const htmlPreprocessor = {
   name: 'html',
-  extension: /.html?$/,
+  extension: /(\.muh$)|(\.html?$)/,
+  outputExtension: '.html',
   /**
    * Process HTML. Resolves `<html-include>` directives via an `include` function provided in data.
    * 
