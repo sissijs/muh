@@ -23,7 +23,7 @@ const makeConfig = () => {
     output: [
       {
         banner,
-        file: `${OUTPUT_DIR}/muh.esm.js`, // ESM
+        file: `${OUTPUT_DIR}/muh.js`,
         format: 'es',
         exports: 'auto',
         globals: GLOBALS,
@@ -38,7 +38,7 @@ const makeConfig = () => {
     output: [
       {
         banner,
-        file: `${OUTPUT_DIR}/template.esm.js`, // ESM
+        file: `${OUTPUT_DIR}/template.js`,
         format: 'es',
         exports: 'auto',
         globals: GLOBALS,
