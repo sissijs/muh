@@ -1,5 +1,10 @@
 import { safeEval } from './safe-eval.js'
-
+/**
+ * Parse filter expressions
+ * @param {string} expr filter expression string
+ * @param {import('node:vm').Context} ctx VM context
+ * @returns {any} evaluated value
+ */
 export function parseFilterExpression(expr, ctx) {
   const colonSyntax = expr.match(/^([a-zA-Z_]\w+?)(?:: (.+?))?$/);
   if (colonSyntax !== null) {

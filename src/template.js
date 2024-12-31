@@ -1,4 +1,4 @@
-///<reference path="typedefs.js"/>
+///<reference path="./typedefs.js"/>
 import vm from 'node:vm';
 import { mergeMaps } from './utils/merge-maps.js';
 import { parseFilterExpression } from './utils/parse-filter-expression.js';
@@ -15,8 +15,8 @@ const TEMPLATE_REGEX = /\{\{(.{1,1024}?)\}\}/gm;
  *
  * @param {string} content the template content
  * @param {any} [data] the data object
- * @param {TemplateConfig} [config] the template configuration, where you can specify additional filters available inside the template
- * @returns {string} the template result string
+ * @param {import('./typedefs.js').TemplateConfig} [config] the template configuration, where you can specify additional filters available inside the template
+ * @returns {Promise<string>} the template result string
  */
 export async function template(content, data, config) {
   let isSafe = false;
@@ -28,7 +28,7 @@ export async function template(content, data, config) {
   ]);
   const context = vm.createContext({ ...builtinHelpers, ...(data ?? {}) });
   const filters = config?.filters ? 
-    mergeMaps(defaultFilters, config.filters instanceof Map ? config.filters : new Map(Object.fromEntries(config.filters))) : 
+    mergeMaps(defaultFilters, config.filters) : 
     defaultFilters;
   let templateResult = content;
 

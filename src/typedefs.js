@@ -3,12 +3,13 @@
  * @property {string} name name of the preprocessor.
  * @property {string|RegExp} extension string or regexp of the extension, including the dot.
  * @property {(content: string, data: any) => Promise<string>} process content processing function
+ * @property {string} [outputExtension] extension to use when writing the output to a file
  */
 
 /**
  * @typedef TemplateConfig
  * Configuration object for the template() function.
- * @property {Map<string, Function>} filters map of additional filters to be used inside the template
+ * @property {Map<string, Function>} [filters] map of additional filters to be used inside the template
  */
 
 /**
@@ -21,5 +22,7 @@
  * @property {string} [layoutDir="_layouts"] subdirectory to look for layout files. default: "_layouts"
  * @property {boolean} [relativeIncludes=false] whether to include relative to the current file. default: false
  * @property {Array<Preprocessor>} [preprocessors] list of preprocessors. By default: built-ins for html, css, markdown
+ * @property {Array<string>} [parentLayouts] array of parent layouts. Internally used to detect cyclic dependencies
+ * @property {Array<string>} [parentIncludes] array of parent includes. Internally used to detect cyclic dependencies
  */
 

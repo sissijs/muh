@@ -24,8 +24,8 @@ const defaultResolver = async (filePath) => {
  * @param {string} inputContent file contents
  * @param {string} inputFilePath file path
  * @param {any} [data] template data
- * @param {ProcessTemplateFileConfig} config 
- * @returns {string} template output
+ * @param {import("./typedefs.js").ProcessTemplateFileConfig} [config] 
+ * @returns {Promise<string>} template output
  */
 export async function processTemplateFile(inputContent, inputFilePath, data, config) {
   const include = async (includeFilePath, dataOverrides, configOverrides) => {
@@ -51,7 +51,7 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
       throw new Error(`invalid path "${fullIncludePath}": break out of the current working dir.`);
     }
     const includeContent = await (innerConfig.resolve ?? defaultResolver)(fullIncludePath);
-    return await processTemplateFile(
+    const includeResult = await processTemplateFile(
       includeContent, 
       includeFilePath, 
       {
@@ -62,6 +62,10 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
         parentIncludes,
       }
     );
+    if (typeof data?.onInclude === 'function') {
+      data.onInclude(includeFilePath);
+    }
+    return includeResult;
   }
 
   const layout = async (layoutFilePath, content) => {
@@ -79,9 +83,9 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
     if (fullLayoutPath.startsWith('..')) {
       throw new Error(`invalid path "${fullLayoutPath}": break out of the current working dir.`);
     }
-    const layoutContent = await (config.resolve ?? defaultResolver)(fullLayoutPath);
-    return await processTemplateFile(
-      layoutContent, 
+    const layoutContent = await (config?.resolve ?? defaultResolver)(fullLayoutPath);
+    const layoutResult = await processTemplateFile(
+      layoutContent?.toString() ?? '', 
       layoutFilePath, 
       {
         ...(data ?? {}),
@@ -92,6 +96,10 @@ export async function processTemplateFile(inputContent, inputFilePath, data, con
         parentLayouts,
       }
     );
+    if (typeof data?.onLayoutInclude === 'function') {
+      data.onLayoutInclude(layoutFilePath);
+    }
+    return layoutResult;
   }
   
   const { data: frontmatterData, body} = frontmatter(inputContent);
