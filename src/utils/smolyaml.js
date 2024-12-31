@@ -59,7 +59,12 @@ function buildObject(lines) {
   return result;
 }
 
-export function countedTrim(str) {
+/**
+ * Like trim, but with counting the trimmed characters
+ * @param {string} [str] input string
+ * @returns {{slice: string, trimStart: number, trimEnd: number}}
+ */
+function countedTrim(str) {
   return (!str)? {slice: '', trimStart: 0, trimEnd: 0} : {
     slice: str.trim(), 
     trimStart: str.length - str.trimStart().length, 

@@ -27,6 +27,9 @@ const MAGIC = [
 const UL_PATTERN = /((\s*)(-|(?:(?:\d+\.){1,1000})) (.{1,1000})\n)+/
 const ULLI_PATTERN = /(\s*)(-|(?:(?:\d+\.){1,1000})) (.{1,1000})\n?/g
 
+/**
+ * @param {any} str
+ */
 function inlines(str) {
   let result = str
   for (const [search, replace] of MAGIC) {
@@ -35,6 +38,9 @@ function inlines(str) {
   return result
 }
 
+/**
+ * @param {{ start: any; items: any; }} list
+ */
 function renderList(list) {
   let u = Number.isNaN(list.start)
   let html = u ? '<ul>' : `<ol${list.start!==1?` start="${list.start}"`:''}>`;
@@ -48,25 +54,50 @@ function renderList(list) {
   return html + (u?'</ul>':'</ol>');
 }
 
+/**
+ * @typedef ListObject
+ * @property {number} start first iteration number
+ * @property {Array<ListItem>} items collection of list items 
+ */
+
+/**
+ * @typedef ListItem 
+ * @property {ListObject|null} childList nested child list items
+ * @property {number} indent indentation
+ * @property {string} prefix prefix that was used for the list item
+ * @property {string} content text content of the list item
+ */
+
+
+
+/**
+ * parse and transform markdown list into html string
+ * @param {string} block 
+ * @returns {string} html string
+ */
 function parseList(block) {
   const matches = block.matchAll(ULLI_PATTERN);
   if (! matches) {
-    throw new Error('could not be parsed', block);
+    throw new Error(`could not be parsed: ${block}`);
   }
   const m = Array.from(matches);
+  /** @type {Array<ListItem>} */
   const listItems = m.map(match => ({
     indent: match[1].length,
     prefix: match[2],
     content: match[3],
+    childList: null
   }));
   const parseStart = (str) => {
     const idxPattern = str.match(/(\d+)\.$/);
     return idxPattern ? parseInt(idxPattern[1]): NaN;
   }
 
+  /** @type {ListObject}  */
   const list = {start: parseStart(listItems[0].prefix), items: []};
   let currentList = list;
   let stack = [];
+  /** @type {ListItem|null}  */
   let last = null;
 
   for (const li of listItems) {
@@ -78,7 +109,10 @@ function parseList(block) {
       };
     } else
     if (last && li.indent < last.indent && stack.length > 0) {
-      currentList = stack.pop();
+      const fromStack = stack.pop();
+      if (typeof fromStack !== "undefined") { 
+        currentList = fromStack;
+      }
     }
     const item = {...li, childList: null};
     currentList.items.push(item);
@@ -118,8 +152,8 @@ function markdownEscape(str) {
 
 /**
  * The integrated markdown processor
- * @param {string} input input
- * @param {escape} escape whether to escape the output or not 
+ * @param {string} [input] input
+ * @param {boolean} [escape = true] whether to escape the output or not 
  * @returns 
  */
 export function markdown(input, escape = true) {
@@ -155,11 +189,11 @@ export const markdownPreprocessor = {
   outputExtension: '.html',
   /**
    * Markdown engine. Override to use another markdown engine.
-   * @param {string} content the markdown input
+   * @param {string} [content] the markdown input
    * @returns {Promise<string>} processed markdown
    */
   markdownEngine: async (content) => {
-    return await markdown(content)
+    return (await markdown(content)) ?? '';
   },
   async process(content, data) {
     content = await markdownPreprocessor.markdownEngine(content);

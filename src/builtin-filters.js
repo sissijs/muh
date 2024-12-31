@@ -12,10 +12,10 @@ export function json(arg, pretty = false) {
  * Format date
  * @param {string|Date|number} date
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
- * @param {Intl.DateTimeFormatOptions} options
+ * @param {Intl.DateTimeFormatOptions} [options]
  * @returns {string} formatted date
  */
-export function date(date, locales = "de-DE", options = null) {
+export function date(date, locales = "de-DE", options) {
   return new Intl.DateTimeFormat(locales, options ?? {dateStyle: 'medium'}).format(
     typeof date === "string" ? Date.parse(date) : date
   );
@@ -25,10 +25,10 @@ export function date(date, locales = "de-DE", options = null) {
  * Format time
  * @param {string|Date|number} date
  * @param {Intl.LocalesArgument} locales the locale (default: 'en-US')
- * @param {Intl.DateTimeFormatOptions} options DateTimeFormatOptions.
+ * @param {Intl.DateTimeFormatOptions} [options] DateTimeFormatOptions.
  * @returns {string} formatted date
  */
-export function time(date, locales = "de-DE", options = null) {
+export function time(date, locales = "de-DE", options) {
   return new Intl.DateTimeFormat(locales, options ?? {timeStyle: 'short'}).format(
     typeof date === "string" ? Date.parse(date) : date
   );
@@ -37,12 +37,12 @@ export function time(date, locales = "de-DE", options = null) {
 /**
  * Format as currency.
  * @param {number} amount
- * @param {Intl.LocalesArgument} locales
- * @param {string?} currency
+ * @param {Intl.LocalesArgument} [locales]
+ * @param {string?} [currency]
  * @returns
  */
-export function currency(amount, locales = "de-DE", currency = "eur") {
-  return new Intl.NumberFormat(locales, { style: "currency", currency }).format(
+export function currency(amount, locales = "de-DE", currency = 'eur') {
+  return new Intl.NumberFormat(locales, { style: "currency", currency: currency ?? 'eur' }).format(
     amount
   );
 }
@@ -51,10 +51,10 @@ export function currency(amount, locales = "de-DE", currency = "eur") {
  * Format number
  * @param {number} value
  * @param {Intl.LocalesArgument} locales
- * @param {Intl.NumberFormatOptions} options
+ * @param {Intl.NumberFormatOptions} [options]
  * @returns {string} formatted number
  */
-export function numberFormat(value, locales, options = null) {
+export function numberFormat(value, locales, options) {
   return new Intl.NumberFormat(locales, options ?? {}).format(
     value
   );
@@ -64,7 +64,7 @@ export function numberFormat(value, locales, options = null) {
  * Select a first N elements of an array
  * @param {Iterable} array
  * @param {number} limit
- * @returns
+ * @returns {Iterable}
  */
 export function limit(array, limit) {
   return Array.from(array).slice(0, Math.max(0, limit));
@@ -73,7 +73,7 @@ export function limit(array, limit) {
 /**
  * Copy an array and reverse
  * @param {Iterable} array
- * @returns new array, revered
+ * @returns {Array} new array, revered
  */
 export function reverse(array) {
   return Array.from(array).reverse();
@@ -82,7 +82,7 @@ export function reverse(array) {
 /**
  * Return a sorted copy of an array
  * @param {Iterable} array
- * @returns new array, sorted
+ * @returns {Iterable} new array, sorted
  */
 export function sort(array) {
   const result = Array.from(array);
@@ -102,29 +102,40 @@ export function last(array, amount = 1) {
 /**
  * Escape HTML (replace angle brackets and ampersands with entities)
  * @param {string} str
- * @returns escaped html
+ * @returns {string} escaped html
  */
 export function htmlentities(str) {
   return str
     ?.replace(/&/gm, "&amp;")
     .replace(/</gm, "&lt;")
-    .replace(/>/gm, "&gt;");
+    .replace(/>/gm, "&gt;") ?? '';
 }
 
 /**
  * URL-encode
  * @param {string} str
- * @returns encoded string
+ * @returns {string} encoded string
  */
 export function urlencode(str) {
   return encodeURIComponent(str);
 }
 
+/**
+ * Used to resolve promises in filters
+ * @param {Promise<any>} asyncInput 
+ * @returns {Promise<any>} anything
+ */
 export async function async(asyncInput) {
   const result = await asyncInput;
   return typeof result === "function" ? result() : result;
 }
 
+/**
+ * Iterate over a collection
+ * @param {Iterable} array 
+ * @param {(item: any) => string} callback 
+ * @returns {string}
+ */
 export function each(array, callback) {
   if (! array) {
     return '';
@@ -132,6 +143,12 @@ export function each(array, callback) {
   return (array instanceof Array ? array : [array]).map(callback).join("");
 }
 
+/**
+ * Pipe something into a callback
+ * @param {any} obj 
+ * @param {(item: any) => string} callback 
+ * @returns {string}
+ */
 export function pipe(obj, callback) {
   return callback(obj);
 }
