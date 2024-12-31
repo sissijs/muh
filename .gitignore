@@ -1,6 +1,7 @@
 .DS_Store
 Thumbs.db
 *.log
+tsconfig.tsbuildinfo
 
 node_modules
 codeql.db
