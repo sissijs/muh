@@ -126,5 +126,12 @@ export async function async(asyncInput) {
 }
 
 export function each(array, callback) {
-  return array.map(callback).join("");
+  if (! array) {
+    return '';
+  }
+  return (array instanceof Array ? array : [array]).map(callback).join("");
+}
+
+export function pipe(obj, callback) {
+  return callback(obj);
 }
